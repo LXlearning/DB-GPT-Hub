@@ -47,8 +47,8 @@ EXT2TYPE = {"csv": "csv", "json": "json", "jsonl": "json", "txt": "text"}
 # TODO: BIRD \ WiKiSQL \ ...
 SQL_DATA_INFO = [
     {
-        "data_source": "spider",
-        "train_file": ["train_spider.json", "train_others.json"],
+        "data_source": "Cspider",
+        "train_file": ["train.json"],
         "dev_file": ["dev.json"],
         "train_tables_file": "tables.json",
         "dev_tables_file": "tables.json",
@@ -56,6 +56,16 @@ SQL_DATA_INFO = [
         "output_name": "query",
         "is_multiple_turn": False,
     }
+    # {
+    #     "data_source": "spider",
+    #     "train_file": ["train_spider.json", "train_others.json"],
+    #     "dev_file": ["dev.json"],
+    #     "train_tables_file": "tables.json",
+    #     "dev_tables_file": "tables.json",
+    #     "db_id_name": "db_id",
+    #     "output_name": "query",
+    #     "is_multiple_turn": False,
+    # }
     # {
     #     "data_source": "bird",
     #     "train_file": ["train/train.json"],
@@ -102,7 +112,30 @@ I want you to act as a SQL terminal in front of an example database, \
 you need only to return the sql command to me.Below is an instruction that describes a task, \
 Write a response that appropriately completes the request.\n"
 ##Instruction:\n{}\n"""
+
+INSTRUCTION_PROMPT_CN = """\
+我希望你充当示例数据库的SQL终端，\
+你只需要返回SQL命令给我。以下是描述任务的指令，\
+编写一个适当地完成请求的响应。\n"
+## 指令：\n{}\n"""
+
 INPUT_PROMPT = "###Input:\n{}\n\n###Response:"
+
+INSTRUCTION_ONE_SHOT_PROMPT_CN = """\
+我希望你充当示例数据库的SQL终端。\
+你只需要返回 SQL 命令给我。\
+首先，我会向你展示一些指令及其正确的 SQL 响应示例。\
+然后，我会给你一个新指令，你需要编写一个适当完成请求的 SQL 响应。\
+\n### 示例1 指令：
+该数据库包含名为 employee、salary 和 position 的表。\
+表 employee 包含 employee_id、name、age 和 position_id 列。employee_id 是主键。\
+表 salary 包含 employee_id、amount 和 date 列。employee_id 是主键。\
+表 position 包含 position_id、title 和 department 列。position_id 是主键。\
+salary 表中的 employee_id 是 employee 表中 employee_id 的外键。\
+employee 表中的 position_id 是 position 表中 position_id 的外键。\
+\n### 示例1 输入：\n列出'Engineering'部门员工的姓名和年龄。\n\
+\n### 示例1 响应：\nSELECT employee.name, employee.age FROM employee JOIN position ON employee.position_id = position.position_id WHERE position.department = 'Engineering';\
+\n###新指令：\n{}\n"""
 
 INSTRUCTION_ONE_SHOT_PROMPT = """\
 I want you to act as a SQL terminal in front of an example database. \

@@ -1,6 +1,9 @@
 import os
+# 添加根目录到路径下
+import sys
+from typing import Any, Dict, Optional
 
-from typing import Optional, Dict, Any
+sys.path.append('./')
 from dbgpt_hub.train import sft_train
 
 

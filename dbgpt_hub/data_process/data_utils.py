@@ -1,37 +1,21 @@
 import hashlib
 import os
+from itertools import chain
+from typing import (TYPE_CHECKING, Any, Dict, Generator, List, Literal,
+                    Optional, Tuple, Union)
+
 import numpy as np
 import pandas as pd
 import tiktoken
-from itertools import chain
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Union,
-    TYPE_CHECKING,
-    Generator,
-    Literal,
-)
-from datasets import (
-    Dataset,
-    DatasetDict,
-    concatenate_datasets,
-    load_dataset,
-    interleave_datasets,
-)
+from datasets import (Dataset, DatasetDict, concatenate_datasets,
+                      interleave_datasets, load_dataset)
 from transformers.tokenization_utils import PreTrainedTokenizer
 
 from dbgpt_hub.configs.config import EXT2TYPE, IGNORE_INDEX
-from dbgpt_hub.configs.data_args import (
-    DEFAULT_PROMPT_DICT,
-    ALPACA_PROMPT_DICT,
-    SQL_PROMPT_DICT,
-    Template,
-    Llama2Template,
-)
+from dbgpt_hub.configs.data_args import (ALPACA_PROMPT_DICT,
+                                         DEFAULT_PROMPT_DICT,
+                                         SQL_PROMPT_CN_DICT, SQL_PROMPT_DICT,
+                                         Llama2Template, Template)
 
 if TYPE_CHECKING:
     from dbgpt_hub.configs.model_args import ModelArguments
@@ -40,7 +24,6 @@ if TYPE_CHECKING:
     from transformers import TrainingArguments, Seq2SeqTrainingArguments
 
 from dbgpt_hub.llm_base.loggings import get_logger
-
 
 logger = get_logger(__name__)
 

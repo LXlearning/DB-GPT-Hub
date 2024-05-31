@@ -1,12 +1,13 @@
-import os
 import json
+import os
 import sys
 
 ROOT_PATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(ROOT_PATH)
 
+from typing import Any, Dict, List, Optional
+
 from tqdm import tqdm
-from typing import List, Dict, Optional, Any
 
 from dbgpt_hub.data_process.data_utils import extract_sql_prompt_dataset
 from dbgpt_hub.llm_base.chat_model import ChatModel
@@ -26,8 +27,10 @@ def inference(model: ChatModel, predict_data: List[Dict], **input_kwargs):
     # test
     # for item in predict_data[:20]:
     for item in tqdm(predict_data, desc="Inference Progress", unit="item"):
+        print('-'*20)
         print(f"item[input] \n{item['input']}")
         response, _ = model.chat(query=item["input"], history=[], **input_kwargs)
+        print(f"response:", response)
         res.append(response)
     return res
 

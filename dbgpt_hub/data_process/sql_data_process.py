@@ -1,22 +1,21 @@
-import os
-import json
-import jsonlines
-import sys
-import re
 import argparse
+import json
+import os
+import re
+import sys
+
+import jsonlines
 
 ROOT_PATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(ROOT_PATH)
 
 from tqdm import tqdm
 
-from dbgpt_hub.configs.config import (
-    SQL_DATA_INFO,
-    DATA_PATH,
-    INPUT_PROMPT,
-    INSTRUCTION_PROMPT,
-    INSTRUCTION_ONE_SHOT_PROMPT,
-)
+from dbgpt_hub.configs.config import (DATA_PATH, INPUT_PROMPT,
+                                      INSTRUCTION_ONE_SHOT_PROMPT,
+                                      INSTRUCTION_ONE_SHOT_PROMPT_CN,
+                                      INSTRUCTION_PROMPT,
+                                      INSTRUCTION_PROMPT_CN, SQL_DATA_INFO)
 
 
 class ProcessSqlData:
@@ -36,6 +35,7 @@ class ProcessSqlData:
         db_id_name,
         output_name,
         is_multiple_turn=False,
+        prompt_language='cn',
     ):
         """
         TO DO:
@@ -61,66 +61,76 @@ class ProcessSqlData:
         # 先将db_id 的table和coloumns处理好
         db_dict = {}
         for item in tables:
-            tables = item["table_names_original"]
+            table = item["table_names_original"]
             coloumns = item["column_names_original"][1:]
             primary_key = item["primary_keys"]
             foreign_keys = item["foreign_keys"]
-            source = (
-                item["db_id"] + " contains tables such as " + ", ".join(tables) + ". "
-            )
-            for i, name in enumerate(tables):
+            if prompt_language == 'cn':
+                source = (item["db_id"] + " 包含数据表 " + ", ".join(table) + "。")
+            else:
+                source = (item["db_id"] + " contains tables such as " + ", ".join(table) + ". ")
+            for i, name in enumerate(table):
                 data = [coloumn[1] for coloumn in coloumns if coloumn[0] == i]
-                source += (
-                    "Table " + name + " has columns such as " + ", ".join(data) + ". "
-                )
+                if prompt_language == 'cn':
+                    source += ("表 " + name + " 包含的数据列如下: " + ", ".join(data) + "。")
+                else:
+                    source += ("Table " + name + " has columns such as " + ", ".join(data) + ". ")
 
                 # get primary key info
                 for j in range(len(primary_key)):
                     if type(primary_key[j]) == int:
                         if coloumns[primary_key[j] - 1][0] == i:
-                            source += (
-                                coloumns[primary_key[j] - 1][1]
-                                + " is the primary key."
-                                + "\n"
-                            )
+                            if prompt_language == 'cn':
+                                source += (coloumns[primary_key[j] - 1][1] + " 是主键。"+ "\n")
+                            else:
+                                source += (coloumns[primary_key[j] - 1][1] + " is the primary key."+ "\n")
                     # combination primary key
                     elif type(primary_key[j]) == list:
-                        combine_p = "The combination of ("
                         keys = []
                         for k in range(len(primary_key[j])):
                             if coloumns[primary_key[j][k] - 1][0] == i:
                                 keys.append(coloumns[primary_key[j][k] - 1][1])
-                        source += (
-                            combine_p
-                            + ", ".join(keys)
-                            + ") are the primary key."
-                            + "\n"
-                        )
+                        if prompt_language == 'cn':
+                            source += ("列表 (" + ", ".join(keys) + ") 是主键。"+ "\n")
+                        else:
+                            source += ("The combination of (" + ", ".join(keys) + ") are the primary key." + "\n")
                     else:
                         print("not support type", type(primary_key[j]))
                         continue
 
             # get foreign key info
             for key in foreign_keys:
-                source += (
-                    "The "
-                    + coloumns[key[0] - 1][1]
-                    + " of "
-                    + tables[coloumns[key[0] - 1][0]]
-                    + " is the foreign key of "
-                    + coloumns[key[1] - 1][1]
-                    + " of "
-                    + tables[coloumns[key[1] - 1][0]]
-                    + ".\n"
-                )
+                if prompt_language == 'cn':
+                    source += (
+                        "表 " + table[coloumns[key[0] - 1][0]]
+                        + "中的 " + coloumns[key[0] - 1][1]
+                        + "是表 " + table[coloumns[key[1] - 1][0]] + " 中"
+                        + coloumns[key[1] - 1][1] + " 的外键。\n"
+                    )
+                else:
+                    source += (
+                        "The "
+                        + coloumns[key[0] - 1][1]
+                        + " of "
+                        + table[coloumns[key[0] - 1][0]]
+                        + " is the foreign key of "
+                        + coloumns[key[1] - 1][1]
+                        + " of "
+                        + table[coloumns[key[1] - 1][0]]
+                        + ".\n"
+                    )
 
             db_dict[item["db_id"]] = source
 
         res = []
-        base_instruction = INSTRUCTION_PROMPT
-        if self.num_shot == 1:
-            base_instruction = INSTRUCTION_ONE_SHOT_PROMPT
-
+        if prompt_language == 'cn':
+            base_instruction = INSTRUCTION_PROMPT_CN
+            if self.num_shot == 1:
+                base_instruction = INSTRUCTION_ONE_SHOT_PROMPT_CN
+        else:
+            base_instruction = INSTRUCTION_PROMPT
+            if self.num_shot == 1:
+                base_instruction = INSTRUCTION_ONE_SHOT_PROMPT
         for data in tqdm(datas):
             if data[db_id_name] in db_dict.keys():
                 if is_multiple_turn:  # 多轮
@@ -243,9 +253,10 @@ if __name__ == "__main__":
         "--code_representation", help="Enable code representation", default=False
     )
     args = parser.parse_args()
-
-    all_in_one_train_file = os.path.join(DATA_PATH, "example_text2sql_train.json")
-    all_in_one_dev_file = os.path.join(DATA_PATH, "example_text2sql_dev.json")
+    trn_name = 'text2sql_Cspider_train'
+    dev_name = 'text2sql_Cspider_dev'
+    all_in_one_train_file = os.path.join(DATA_PATH, f"{trn_name}.json")
+    all_in_one_dev_file = os.path.join(DATA_PATH, f"{dev_name}.json")
     precess = ProcessSqlData(
         train_file=all_in_one_train_file,
         dev_file=all_in_one_dev_file,
@@ -255,10 +266,10 @@ if __name__ == "__main__":
 
     # one-shot
     one_shot_all_in_one_train_file = os.path.join(
-        DATA_PATH, "example_text2sql_train_one_shot.json"
+        DATA_PATH, f"{trn_name}_one_shot.json"
     )
     one_shot_all_in_one_dev_file = os.path.join(
-        DATA_PATH, "example_text2sql_dev_one_shot.json"
+        DATA_PATH, f"{dev_name}_one_shot.json"
     )
     one_shot_precess = ProcessSqlData(
         train_file=one_shot_all_in_one_train_file,

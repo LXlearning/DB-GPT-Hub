@@ -1,8 +1,9 @@
-import os
 import json
-import tiktoken
+import os
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple, Union
+
+import tiktoken
 
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer
@@ -41,6 +42,11 @@ SQL_PROMPT_DICT = {
         "####Instruction:\n{instruction}\n\###Response: "
     ),
 }
+
+SQL_PROMPT_CN_DICT = {
+    "prompt_input": (
+        "{instruction}\n{input}"
+    )}
 
 
 @dataclass
