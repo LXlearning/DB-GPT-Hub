@@ -60,9 +60,11 @@ class ProcessSqlData:
 
         # 先将db_id 的table和coloumns处理好
         db_dict = {}
-        for item in tables:
+        # for item in tables:
+        for j, item in enumerate(tables):
             table = item["table_names_original"]
             coloumns = item["column_names_original"][1:]
+            coloumns_cn = item["cn_column_names_original"][1:]
             primary_key = item["primary_keys"]
             foreign_keys = item["foreign_keys"]
             if prompt_language == 'cn':
@@ -71,8 +73,13 @@ class ProcessSqlData:
                 source = (item["db_id"] + " contains tables such as " + ", ".join(table) + ". ")
             for i, name in enumerate(table):
                 data = [coloumn[1] for coloumn in coloumns if coloumn[0] == i]
+                data_cn = [coloumn[1] for coloumn in coloumns_cn if int(coloumn[0]) == i]
                 if prompt_language == 'cn':
-                    source += ("表 " + name + " 包含的数据列如下: " + ", ".join(data) + "。")
+                    assert len(data) == len(data_cn) # "数据表和数据列的中文名称数量不一致"
+                    cols_explain = []
+                    for x1, x2 in zip(data, data_cn):
+                        cols_explain.append(f"{x1} [{x2}]")
+                    source += (f"表 {name} 包含的数据列如下: \n" + "\n".join(cols_explain) + '\n')
                 else:
                     source += ("Table " + name + " has columns such as " + ", ".join(data) + ". ")
 

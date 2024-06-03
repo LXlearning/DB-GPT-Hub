@@ -1,0 +1,1 @@
+python dbgpt_hub/eval/evaluation.py --input dbgpt_hub/output/pred/chatglm3_pred_sql.sql 

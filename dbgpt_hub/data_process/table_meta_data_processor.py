@@ -1,4 +1,5 @@
-from typing import Any, Optional, Dict
+from typing import Any, Dict, List, Optional
+
 from connectors.anydb_connector import AnyDBConnector
 
 
